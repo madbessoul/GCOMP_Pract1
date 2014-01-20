@@ -1,15 +1,17 @@
-# GCOMP Practical 1 : Core and pan genomes
+##GCOMP Practical 1 : Core and pan genomes
 
+####A pipeline for metagenomic analysis using MGA Gene Finder and CD-HIT to compute the core and pan genomes. Tested with a set of 21 strains of E. Coli
+----------------------------------------------------------------------------------
 
-A pipeline for metagenomic analysis using MGA Gene Finder and CD-HIT to compute
-the core and pan genomes. Tested with a set of 21 strains of E. Coli
--------------------------------------------------------------------------------
-
-Usage :
+#### Usage :
 ./mga.sh [folder containing the .fna sequences files for each strain]
 
+Example with provided data (4 genomes) :
+./mga.sh example_data
 
-Content :
+==================================================================================
+
+#### Content :
 mga.sh
 Bash script to run the whole pipeline analysis.
 
@@ -26,10 +28,10 @@ Output : PDF Plot of core and pan genomes
 
 (All PDF plots are stored in the same folder where the genome set resides)
 
+==================================================================================
 
-Example with provided data (4 genomes) :
 
 ./mga.sh example_data
 
-Note:  CD-HIT being very computationnaly demanding, it takes several minute
+*Note*:  CD-HIT being very computationnaly demanding, it takes several minute
 up to 2h to process the 4 genomes, depending on the machine.
