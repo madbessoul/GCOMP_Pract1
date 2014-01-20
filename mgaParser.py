@@ -16,55 +16,15 @@ import os
 import getopt
 import commands
 import string
-import re
-# Fasta file parser, faster than Biopython's
-import fasta_parser
 
 # We use NumPy too for convenient data structures
-from numpy import genfromtxt, histogram
+from numpy import genfromtxt
 
-#from Bio import SeqIO
-#from Bio.Seq import Seq
+from Bio import SeqIO
+from Bio.Seq import Seq
 
 import pylab as plt
 
-
-def revcomp(dna):
-# Function to get DNA reverse complement
-
-    complements = string.maketrans('acgtrymkbdhvACGTRYMKBDHV', 'tgcayrkmvhdbTGCAYRKMVHDB')
-    rcseq = dna.translate(complements)[::-1]
-    return rcseq
-
-
-def translate_dna(sequence):
-# Function to translate DNA sequence to amino-acids
-# Stop codons are representend with an underscore only to check
-# if gene sequences don't contain any
-# replace with empty string to get usable sequences
-
-    # * = start codon
-    # _ = stop codons [TGA, TAG, TAA]
-    codonbase = { 'ATA':'I',
-    'ATC':'I', 'ATT':'I', 'ATG':'*M', 'ACA':'T', 'ACC':'T', 'ACG':'T',
-    'ACT':'T', 'AAC':'N', 'AAT':'N', 'AAA':'K', 'AAG':'K', 'AGC':'S',
-    'AGT':'S', 'AGA':'R', 'AGG':'R', 'CTA':'L', 'CTC':'L', 'CTG':'L',
-    'CTT':'L', 'CCA':'P', 'CCC':'P', 'CCG':'P', 'CCT':'P', 'CAC':'H',
-    'CAT':'H', 'CAA':'Q', 'CAG':'Q', 'CGA':'R', 'CGC':'R', 'CGG':'R',
-    'CGT':'R', 'GTA':'V', 'GTC':'V', 'GTG':'V', 'GTT':'V', 'GCA':'A',
-    'GCC':'A', 'GCG':'A', 'GCT':'A', 'GAC':'D', 'GAT':'D', 'GAA':'E',
-    'GAG':'E', 'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGT':'G', 'TCA':'S',
-    'TCC':'S', 'TCG':'S', 'TCT':'S', 'TTC':'F', 'TTT':'F', 'TTA':'L',
-    'TTG':'L', 'TAC':'Y', 'TAT':'Y', 'TAA':'_', 'TAG':'_', 'TGC':'C',
-    'TGT':'C', 'TGA':'_', 'TGG':'W'}
-
-
-
-    proteinseq = ''
-    for n in range(0,len(sequence),3):
-        if codonbase.has_key(sequence[n:n+3]) == True:
-            proteinseq += codonbase[sequence[n:n+3]]
-    return proteinseq
 
 def main(argv=None):
 
@@ -127,7 +87,7 @@ def main(argv=None):
                      histtype='step')
 
     prot_nb = []
-    fig = plt.figure(figsize=(24, 12), dpi=100)
+    fig = plt.figure(dpi=100)
     plt.subplot(121)
     for strain in strain_set:
 
@@ -137,8 +97,8 @@ def main(argv=None):
         # It's not a string, it's a seq object containing sequence id
         # and the nucleotide sequence.
         genome_dir = os.path.dirname(os.path.realpath(inputFile))
-        genome = fasta_parser.FastaParser(genome_dir + '/' + strain + '.fna')
-        genomeId = genome.records.keys()[0]
+        genome = next(SeqIO.parse(genome_dir + '/' + strain + '.fna', 'fasta'))
+        genomeId = genome.description.split(' ')[0]
 
         # Output file in fasta format - ex gi|556503834|ref|NC_000913.3|_gene_1
         outfile = open(genome_dir + "/" + strain + '.faa', 'w')
@@ -154,11 +114,9 @@ def main(argv=None):
         for cds in strain_annotation:
 
             # Get raw sequence using coordinates from annotations
-            cds_dna_seq = genome.records[genomeId]['sequence'][cds['start']:cds['end']]
+            cds_dna_seq = genome.seq[cds['start']-1:cds['end']]
 
             # Remove \n from sequences before processing (not sure it's necessary)
-            # cds_dna_seq = re.sub('\n', '', cds_dna_seq)
-
             cds_len_dist.append(len(cds_dna_seq))
 
             # Write sequence ID to fasta file
@@ -167,12 +125,12 @@ def main(argv=None):
             # Write crick aa seq if in fwd strand
             if cds['strand'] == '+':
                 outfile.write('>%s%s|fwd\n' % (genomeId, cds['id']))
-                outfile.write('%s\n' % translate_dna(cds_dna_seq))
+                outfile.write('%s\n' % cds_dna_seq.translate().tostring())
 
             # Else write watson aa seq (reverse complement)
             else:
                 outfile.write('>%s%s|rev\n' % (genomeId, cds['id']))
-                outfile.write('%s\n' % translate_dna(revcomp(cds_dna_seq)))
+                outfile.write('%s\n' % cds_dna_seq.reverse_complement().translate().tostring())
 
         plt.hist(cds_len_dist, label=strain, **common_params)
         outfile.close

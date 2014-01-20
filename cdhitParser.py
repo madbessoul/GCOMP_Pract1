@@ -1,5 +1,7 @@
 """
-Author : Madjid BESSOUL
+Original Author : Louis VERNY
+Modified and adapted for the pipeline analysis by Madjid BESSOL
+
 
 Python script to parse clustering output of CD-HIT and plot core and pan genomes
 for the aligned sequences
@@ -9,8 +11,6 @@ import sys
 import os
 import getopt
 import commands
-import ipdb
-from sets import Set
 import pylab as plt
 
 
@@ -48,6 +48,9 @@ def main(argv=None):
     clust = []
     nbClust = -1
 
+    # Parse the CDHIT file
+    # We get the list of the clusters, and for each cluster,
+    # the sequences (ids) that it contains
     for line in infile:
         if line[0] == '>':
             nbClust += 1
@@ -55,6 +58,8 @@ def main(argv=None):
         else:
             clust[nbClust].append(line.split(' ')[1].split('|')[1])
 
+    # We then transform the data to be indiced by strains
+    # instead of cluster id
     strain = []
     strainCl = []
 
@@ -69,14 +74,14 @@ def main(argv=None):
             if strain[i] in clust[j]:
                 strainCl[i].append(j)
 
+    # Basic counteing routines to find core and pan genomes
+
     core = []
     pan = []
 
     for i in xrange(len(strainCl[0])):
         core.append(strainCl[0][i])
         pan.append(strainCl[0][i])
-
-
 
     core_gen = [len(core)]
     pan_gen = [len(pan)]
@@ -101,6 +106,7 @@ def main(argv=None):
     for i in xrange(1, len(strain)):
         new_families.append(pan_gen[i] - pan_gen[i-1])
 
+    # Plotting routines
     plt.plot(core_gen, '-o', color='SteelBlue',
         label = "Core genome", alpha=.75, linewidth=2)
     plt.plot(pan_gen, '-o', color='DarkRed',

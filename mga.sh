@@ -13,7 +13,12 @@
 # command line :
 #   chmod u+x mga.sh
 
-rm $1/*.mga
+# Tested on OS X 10.9, with Python 2.7.3
+# REQUIRMENTS :
+#  - mga_osx and cd-hit (symlinked)
+#  - python 2.4+ with Matplolib, Numpy and Biopython
+
+rm $1/*.mga 2> errlog.txt
 echo "== Running MGA Gene Finder"
 for file in $1/*.fna
 do
@@ -48,7 +53,7 @@ echo "== Merging MGA results"
 cat $1/*.mga > $1/allgenomes.mga
 rm $1/NC*.mga
 
-# Run mgaParser script.e
+# Run mgaParser script
 # Output :
 #   - Amino-acid multi-fasta file of predited protein seqs. for each strain
 #   - Protein size distribution by strain
@@ -69,9 +74,9 @@ rm $1/NC*.faa
 # Output : fasta file with representative aa sequences
 #          .clst file with gene families
 echo "== Finding gene families with CD-HIT"
-# cd-hit -i $1/allseqs.faa -o $1/ecoli-cdhit -c 0.4 -n 2
+cd-hit -i $1/allseqs.faa -o $1/ecoli-cdhit -c 0.4 -n 2
 
 # Todo : Python script to parse CD-HIT output and plot core and pan genomes
-
+python cdhitParser.py --input $1/ecoli-cdhit.clstr
 
 
